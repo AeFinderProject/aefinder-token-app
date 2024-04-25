@@ -1,7 +1,6 @@
 using AeFinder.Sdk.Processor;
 using AeFinder.TokenApp.Entities;
 using AElf.CSharp.Core;
-using Microsoft.Extensions.Options;
 using Volo.Abp.ObjectMapping;
 
 namespace AeFinder.TokenApp.Processors;
@@ -9,9 +8,6 @@ namespace AeFinder.TokenApp.Processors;
 public abstract class TokenProcessorBase<TEvent> : LogEventProcessorBase<TEvent> where TEvent : IEvent<TEvent>, new()
 {
     protected IObjectMapper ObjectMapper => LazyServiceProvider.LazyGetRequiredService<IObjectMapper>();
-    
-    protected  TokenBalanceOptions TokenBalanceOptions =>
-        LazyServiceProvider.LazyGetRequiredService<IOptionsSnapshot<TokenBalanceOptions>>().Value;
     
     public ITokenContractAddressProvider ContractAddressProvider { get; set; }
 
@@ -132,8 +128,8 @@ public abstract class TokenProcessorBase<TEvent> : LogEventProcessorBase<TEvent>
     {
         await RecordFirstNftInfoAsync(context, symbol, address);
         
-        if (TokenBalanceOptions.InitBalances.TryGetValue(context.ChainId, out var tokenBalanceInitOption) &&
-            context.Block.BlockHeight < tokenBalanceInitOption.StartIndexHeight)
+        if (TokenAppConstants.StartProcessBalanceEventHeight.TryGetValue(context.ChainId, out var height) &&
+            context.Block.BlockHeight < height)
         {
             return;
         }
@@ -209,10 +205,11 @@ public abstract class TokenProcessorBase<TEvent> : LogEventProcessorBase<TEvent>
         }
     }
 
-    protected async Task AddTransferAsync(TransferInfo transferInfo)
+    protected async Task AddTransferAsync(TransferInfo transferInfo, LogEventContext context)
     {
         transferInfo.Id = Guid.NewGuid().ToString();
         transferInfo.FormatAmount = transferInfo.Amount / (decimal)Math.Pow(10, transferInfo.Token.Decimals);
+        transferInfo.TransactionId = context.Transaction.TransactionId;
         await SaveEntityAsync(transferInfo);
     }
 }

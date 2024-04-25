@@ -1,0 +1,72 @@
+using AeFinder.TokenApp.Entities;
+using AeFinder.TokenApp.GraphQL;
+using AElf;
+using AElf.Contracts.MultiToken;
+using AElf.Types;
+using Shouldly;
+using Xunit;
+
+namespace AeFinder.TokenApp.Processors;
+
+public class TokenCreatedProcessorTests : TokenContractAppTestBase
+{
+    private readonly TokenCreatedProcessor _tokenCreatedProcessor;
+
+    public TokenCreatedProcessorTests()
+    {
+        _tokenCreatedProcessor = GetRequiredService<TokenCreatedProcessor>();
+    }
+
+    [Theory]
+    [InlineData("ELF", SymbolType.Token)]
+    [InlineData("NFT-1", SymbolType.Nft)]
+    [InlineData("NFT-0", SymbolType.NftCollection)]
+    public async Task HandleEventAsync_Test(string symbol, SymbolType type)
+    {
+        var tokenCreated = new TokenCreated
+        {
+            Symbol = symbol,
+            Decimals = 8,
+            IsBurnable = true,
+            Issuer = Address.FromBase58("ooCSxQ7zPw1d4rhQPBqGKB6myvuWbicCiw3jdcoWEMMpa54ea"),
+            IssueChainId = 9999721,
+            TotalSupply = 1000,
+            TokenName = "ELF Token",
+            ExternalInfo = new ExternalInfo
+            {
+                Value = { { "key1", "value1" } }
+            }
+        };
+
+        var logEventContext = GenerateLogEventContext(tokenCreated);
+
+        await _tokenCreatedProcessor.ProcessAsync(logEventContext);
+        await SaveDataAsync();
+
+        var token = await Query.TokenInfo(TokenInfoReadOnlyRepository, ObjectMapper, new GetTokenInfoDto
+        {
+            ChainId = ChainId,
+            Symbol = tokenCreated.Symbol
+        });
+        token[0].Symbol.ShouldBe(tokenCreated.Symbol);
+        token[0].Decimals.ShouldBe(tokenCreated.Decimals);
+        token[0].IsBurnable.ShouldBe(tokenCreated.IsBurnable);
+        token[0].Issuer.ShouldBe(tokenCreated.Issuer.ToBase58());
+        token[0].IssueChainId.ShouldBe(ChainHelper.ConvertChainIdToBase58(tokenCreated.IssueChainId));
+        token[0].TotalSupply.ShouldBe(tokenCreated.TotalSupply);
+        token[0].TokenName.ShouldBe(tokenCreated.TokenName);
+        token[0].Type.ShouldBe(type);
+        token[0].Supply.ShouldBe(0);
+        token[0].Issued.ShouldBe(0);
+        token[0].HolderCount.ShouldBe(0);
+        token[0].TransferCount.ShouldBe(0);
+        token[0].ExternalInfo.Count.ShouldBe(1);
+        token[0].ExternalInfo[0].Key.ShouldBe("key1");
+        token[0].ExternalInfo[0].Value.ShouldBe("value1");
+        token[0].IsPrimaryToken.ShouldBe(false);
+        if (type == SymbolType.Nft)
+            token[0].CollectionSymbol.ShouldBe("NFT-0");
+        else
+            token[0].CollectionSymbol.ShouldBeNull();
+    }
+}

@@ -14,7 +14,7 @@ public class TransferredProcessor : TokenProcessorBase<Transferred>
         ObjectMapper.Map(logEvent, transfer);
         transfer.Method = "Transfer";
         transfer.Token = ObjectMapper.Map<Entities.TokenInfo, TokenBase>(token);
-        await AddTransferAsync(transfer);
+        await AddTransferAsync(transfer, context);
         
         await ModifyBalanceAsync(context, logEvent.Symbol, logEvent.From.ToBase58(), -logEvent.Amount);
         await ModifyBalanceAsync(context, logEvent.Symbol, logEvent.To.ToBase58(), logEvent.Amount);

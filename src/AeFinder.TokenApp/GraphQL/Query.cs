@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using AeFinder.Sdk;
 using AeFinder.TokenApp.Entities;
 using GraphQL;
@@ -40,13 +41,18 @@ public class Query
             queryable = queryable.Where(o => o.Issuer == input.Issuer);
         }
         
-        // if (input.Types.Count > 0)
-        // {
-        //     var shouldQuery = input.Types.Select(type =>
-        //         (Func<QueryContainerDescriptor<TokenInfo>, QueryContainer>)(q =>
-        //             q.Term(i => i.Field(f => f.Type).Value(type)))).ToList();
-        //     mustQuery.Add(q => q.Bool(b => b.Should(shouldQuery)));
-        // }
+        if (input.Types.Count > 0)
+        {
+            Expression<Func<TokenInfo, bool>> shouldQuery = null;
+
+            foreach (var type in input.Types)
+            {
+                shouldQuery =shouldQuery is null
+                    ? o => o.Type == type
+                    : shouldQuery.Or(o => o.Type == type);
+            }
+            queryable = queryable.Where(shouldQuery);
+        }
         
         // if(!input.PartialSymbol.IsNullOrWhiteSpace())
         // {
@@ -107,7 +113,7 @@ public class Query
         
         if (!input.Symbol.IsNullOrWhiteSpace())
         {
-            queryable = queryable.Where(o => o.Address == input.Address);
+            queryable = queryable.Where(o => o.Token.Symbol == input.Symbol);
         }
         
         // if(!input.PartialSymbol.IsNullOrWhiteSpace())

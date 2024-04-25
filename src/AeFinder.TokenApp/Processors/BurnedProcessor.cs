@@ -17,7 +17,7 @@ public class BurnedProcessor : TokenProcessorBase<Burned>
         transfer.Method = "Burn";
         transfer.Token = ObjectMapper.Map<Entities.TokenInfo, TokenBase>(token);
         transfer.From = logEvent.Burner.ToBase58();
-        await AddTransferAsync(transfer);
+        await AddTransferAsync(transfer, context);
 
         await ModifyBalanceAsync(context, logEvent.Symbol, logEvent.Burner.ToBase58(), -logEvent.Amount);
         await IncreaseTokenInfoTransferCountAsync(context, logEvent.Symbol);

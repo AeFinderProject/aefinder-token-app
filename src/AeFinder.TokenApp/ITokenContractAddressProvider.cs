@@ -11,8 +11,8 @@ public class TokenContractAddressProvider : ITokenContractAddressProvider, ISing
 {
     private readonly Dictionary<string, string> _contractAddresses = new()
     {
-        { "AELF", "" },
-        { "tDVV", "" }
+        { "AELF", "AELFTokenContractAddress" },
+        { "tDVV", "tDVVTokenContractAddress" }
     };
 
     public string GetContractAddress(string chainId)

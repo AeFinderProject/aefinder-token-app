@@ -14,7 +14,7 @@ public class CrossChainTransferredProcessor : TokenProcessorBase<CrossChainTrans
         transfer.Method = "CrossChainTransfer";
         transfer.Token = ObjectMapper.Map<Entities.TokenInfo, TokenBase>(token);
         transfer.FromChainId = context.ChainId;
-        await AddTransferAsync(transfer);
+        await AddTransferAsync(transfer, context);
         
         await IncreaseTokenInfoTransferCountAsync(context, logEvent.Symbol);
         await IncreaseAccountTransferCountAsync(context, logEvent.From.ToBase58(), logEvent.Symbol);
