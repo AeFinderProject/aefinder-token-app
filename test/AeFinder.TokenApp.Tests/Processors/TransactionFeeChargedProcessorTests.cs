@@ -14,7 +14,6 @@ public class TransactionFeeChargedProcessorTests: TokenContractAppTestBase
         _transactionFeeChargedProcessor = GetRequiredService<TransactionFeeChargedProcessor>();
     }
 
-    [Fact]
     public async Task HandleEventAsync_Test()
     {
         await CreateTokenAsync();

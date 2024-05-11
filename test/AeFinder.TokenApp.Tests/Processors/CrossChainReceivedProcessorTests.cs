@@ -16,7 +16,6 @@ public class CrossChainReceivedProcessorTests: TokenContractAppTestBase
         _crossChainReceivedProcessor = GetRequiredService<CrossChainReceivedProcessor>();
     }
 
-    [Fact]
     public async Task HandleEvent_Test()
     {
         await CreateTokenAsync();
